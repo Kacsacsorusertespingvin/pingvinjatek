@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>0.8-as átlagjáték – Egyfájlos</title>
+  <meta name="description" content="Játék: mindenki 0 és 100 között választ, az átlag*0.8-hoz legközelebb eső nyer. Egyfájlos, GitHub Pages-re kész verzió." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg: #0b1020; /* mély sötétkék */
+      --panel: #121935;
+      --panel-2: #0f1530;
+      --accent: #7c9aff;
+      --accent-2: #9bffd6;
+      --good: #3ad29f;
+      --bad: #ff6b6b;
+      --text: #ebefff;
+      --muted: #9aa3c7;
+      --ring: rgba(124,154,255,.35);
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius-xl: 18px;
+      --radius-2xl: 28px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background:
+        radial-gradient(1200px 800px at 80% -10%, rgba(124,154,255,.08), transparent 55%),
+        radial-gradient(900px 700px at -10% 80%, rgba(155,255,214,.08), transparent 60%),
+        linear-gradient(180deg, #0a0f1d, #0a0f1d 60%, #0b1126);
+      min-height:100%;
+    }
+    a{color:var(--accent)}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+
+    .app-title{display:flex;align-items:center;gap:14px;margin:10px 0 18px}
+    .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 6px 18px rgba(124,154,255,.35)}
+    .app-title h1{font-size:26px;margin:0;font-weight:800;letter-spacing:0.2px}
+    .subtitle{color:var(--muted);margin-top:2px}
+
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-2xl);box-shadow:var(--shadow)}
+    .section{padding:20px}
+    .row{display:flex;flex-wrap:wrap;gap:16px}
+    .col{flex:1 1 280px}
+
+    .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:var(--text);cursor:pointer;font-weight:600;transition:.2s;backdrop-filter: blur(4px)}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 22px rgba(0,0,0,.25);border-color:rgba(124,154,255,.45)}
+    .btn.primary{background:linear-gradient(180deg, rgba(124,154,255,.2), rgba(124,154,255,.08));border-color:rgba(124,154,255,.5)}
+    .btn.danger{border-color: rgba(255,107,107,.35);background: linear-gradient(180deg, rgba(255,107,107,.2), rgba(255,107,107,.05))}
+    .btn.ghost{background:transparent;border-color:rgba(255,255,255,.1)}
+    .btn.small{padding:8px 12px;border-radius:10px;font-size:13px}
+
+    input, select{width:100%;padding:12px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--text);outline:none}
+    input:focus, select:focus{box-shadow:0 0 0 4px var(--ring);border-color:var(--accent)}
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+
+    .pill{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);font-size:13px;color:var(--muted)}
+    .pill .dot{width:10px;height:10px;border-radius:999px;display:inline-block}
+
+    .grid{display:grid;gap:16px}
+    .grid.players{grid-template-columns: repeat(auto-fill,minmax(240px,1fr))}
+
+    .player-card{padding:16px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02))}
+    .player-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .avatar{width:30px;height:30px;border-radius:10px;border:2px solid rgba(255,255,255,.25)}
+    .tag{font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);color:var(--muted)}
+    .muted{color:var(--muted)}
+
+    .round-card{padding:18px;border-radius:18px;border:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg, rgba(124,154,255,.08), rgba(124,154,255,.03))}
+    .round-stats{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+
+    .list{display:flex;flex-direction:column;gap:8px}
+
+    .footer{opacity:.7;font-size:12px;margin-top:22px}
+
+    .hidden{display:none !important}
+
+    .rules{display:flex;flex-wrap:wrap;gap:8px}
+    .rule{padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);font-size:13px}
+    .rule.active{border-color: rgba(155,255,214,.5);background:linear-gradient(180deg, rgba(155,255,214,.18), rgba(155,255,214,.06))}
+
+    .log{max-height:220px;overflow:auto;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);padding:12px}
+    .log p{margin:0 0 6px}
+
+    .spectator-note{font-size:13px;color:var(--muted);margin-left:auto}
+
+    .danger-text{color:var(--bad)}
+    .success-text{color:var(--good)}
+
+    .topbar{display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:14px}
+    .topbar .actions{display:flex;gap:8px;flex-wrap:wrap}
+
+    .tooltip{position:relative;display:inline-block}
+    .tooltip .tip{visibility:hidden;opacity:0;transition:.15s;position:absolute;top:120%;left:50%;transform:translateX(-50%);background:#0d1430;color:#d9def7;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);white-space:nowrap;font-size:12px}
+    .tooltip:hover .tip{visibility:visible;opacity:1}
+
+    .divider{height:1px;background:linear-gradient(90deg, transparent, rgba(255,255,255,.1), transparent);margin:10px 0}
+    .center{text-align:center}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="app-title">
+      <div class="logo"></div>
+      <div>
+        <h1>0.8-as átlagjáték</h1>
+        <div class="subtitle">Lobby ➜ belépés / létrehozás • helyi (egy eszközön) többjátékos • GitHub Pages-kompatibilis</div>
+      </div>
+    </div>
+
+    <!-- LOBBY -->
+    <div id="view-lobby" class="card">
+      <div class="section">
+        <div class="row">
+          <div class="col">
+            <h3>Lobby</h3>
+            <p class="muted">Hozz létre új játékot vagy csatlakozz a jelenlegihez ezen az eszközön. Minden játékos saját nevet és <b>egyedi színt</b> választ.</p>
+          </div>
+          <div class="col">
+            <div class="grid" style="grid-template-columns:1fr 1fr;gap:10px">
+              <button class="btn primary" id="btn-create">Új játék létrehozása</button>
+              <button class="btn" id="btn-join">Belépés játékba</button>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row">
+          <div class="col">
+            <label>Játékosnév</label>
+            <input id="inp-name" placeholder="pl. Csillagharcos" maxlength="18"/>
+          </div>
+          <div class="col">
+            <label>Szín</label>
+            <input id="inp-color" type="color" value="#ff6b6b"/>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <div class="col">
+            <button class="btn" id="btn-add-player">Játékos hozzáadása</button>
+            <span class="pill" id="pill-players"><span class="dot" style="background:#7c9aff"></span><span id="player-count">0</span> játékos a szobában</span>
+          </div>
+          <div class="col" style="text-align:right">
+            <button class="btn" id="btn-start" disabled>Játék indítása</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME VIEW -->
+    <div id="view-game" class="card hidden">
+      <div class="section">
+        <div class="topbar">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+            <div class="pill"><span class="dot" style="background:var(--accent)"></span>Szoba: <b id="room-id">helyi</b></div>
+            <div class="pill"><span class="dot" style="background:var(--accent-2)"></span>Eliminálva: <b id="elim-count">0</b></div>
+            <div class="pill"><span class="dot" style="background:var(--good)"></span>Aktív: <b id="active-count">0</b></div>
+            <div class="spectator-note">A kiesett játékosok nézhetik tovább a játékot. Savazás <span class="danger-text">NINCS</span> 👌</div>
+          </div>
+          <div class="actions">
+            <button class="btn ghost small" id="btn-back-lobby">Vissza a lobbyba</button>
+            <button class="btn small" id="btn-reset">Játék visszaállítása</button>
+          </div>
+        </div>
+
+        <div class="rules" id="rules">
+          <div class="rule" id="rule-0">Alapszabály: 0–100 közül választasz. A választások átlagának <b>0.8-szorosa</b> a cél; aki ehhez a legközelebb van, nyer. Minden másik játékos <b>−1 pont</b>.</div>
+          <div class="rule" id="rule-1">1 kieső után: Azonos számot választók <b>diszkvalifikálva</b> a körből és <b>−1 pont</b>.</div>
+          <div class="rule" id="rule-2">2 kieső után: Ha valaki <b>pont a célszámot</b> választja, akkor a többiek <b>−2 pont</b>.</div>
+          <div class="rule" id="rule-3">3 kieső után: Ketten maradva, ha az egyik <b>0</b>-t, a másik <b>100</b>-at választ, akkor a <b>100</b> nyer azonnal.</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="round-card">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <h3 style="margin:0">Kör: <span id="round-num">1</span></h3>
+            <span class="pill"><span class="dot" style="background:var(--accent)"></span>Cél: <b id="target-display">–</b></span>
+            <span class="pill"><span class="dot" style="background:var(--accent)"></span>Átlag: <b id="avg-display">–</b></span>
+          </div>
+          <div class="round-stats" id="winner-area"></div>
+        </div>
+
+        <div class="grid players" id="players"></div>
+
+        <div class="row" style="margin-top:12px;align-items:flex-start">
+          <div class="col">
+            <button class="btn primary" id="btn-reveal" disabled>Eredmény kihirdetése</button>
+            <button class="btn" id="btn-next" disabled>Következő kör</button>
+          </div>
+          <div class="col">
+            <div class="log" id="log"></div>
+          </div>
+        </div>
+
+        <div class="footer">Tippek: a számbevitelt <b>privátan</b> végezhetitek egymás után, majd „Eredmény kihirdetése”. A játékállás a böngészőben mentésre kerül.</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Állapot ---
+    const STORAGE_KEY = 'eighty-game-state-v1';
+    const $ = (sel)=>document.querySelector(sel);
+    const $$ = (sel)=>document.querySelectorAll(sel);
+
+    const State = {
+      roomId: 'local',
+      round: 1,
+      players: [], // {id, name, color, points, alive, choice, locked}
+      eliminated: 0,
+      log: []
+    };
+
+    function save(){
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(State));
+    }
+    function load(){
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return;
+      try{const s = JSON.parse(raw); Object.assign(State, s);}catch(e){console.warn(e)}
+    }
+
+    // --- UI segéd ---
+    function toast(msg){
+      const p = document.createElement('p'); p.innerHTML = msg; $('#log').prepend(p);
+    }
+    function refreshCounts(){
+      $('#elim-count').textContent = State.eliminated;
+      $('#active-count').textContent = State.players.filter(p=>p.alive).length;
+      $('#player-count').textContent = State.players.length;
+      updateRuleBadges();
+    }
+    function updateRuleBadges(){
+      [1,2,3].forEach(n=>{
+        const el = $('#rule-'+n);
+        if(State.eliminated >= n) el.classList.add('active'); else el.classList.remove('active');
+      });
+    }
+
+    function renderLobby(){
+      $('#view-lobby').classList.remove('hidden');
+      $('#view-game').classList.add('hidden');
+      $('#btn-start').disabled = State.players.filter(p=>p.alive).length < 2;
+      $('#player-count').textContent = State.players.length;
+    }
+
+    function renderGame(){
+      $('#view-lobby').classList.add('hidden');
+      $('#view-game').classList.remove('hidden');
+      $('#room-id').textContent = State.roomId;
+      $('#round-num').textContent = State.round;
+      renderPlayers();
+      refreshCounts();
+      updateRevealNextButtons();
+      renderLog();
+      $('#target-display').textContent = '–';
+      $('#avg-display').textContent = '–';
+      $('#winner-area').innerHTML = '';
+    }
+
+    function renderLog(){
+      const log = $('#log'); log.innerHTML = '';
+      State.log.slice().reverse().forEach(l=>{ const p = document.createElement('p'); p.innerHTML = l; log.appendChild(p); })
+    }
+
+    function addPlayer(name, color){
+      if(!name || !name.trim()) return alert('Adj meg egy nevet!');
+      if(State.players.some(p=>p.color.toLowerCase()===color.toLowerCase())) return alert('Ez a szín már foglalt. Válassz másikat!');
+      const id = 'p'+Math.random().toString(36).slice(2,9);
+      State.players.push({id, name: name.trim(), color, points: 0, alive: true, choice: null, locked: false});
+      save();
+      $('#inp-name').value='';
+      $('#btn-start').disabled = State.players.filter(p=>p.alive).length < 2;
+      $('#player-count').textContent = State.players.length;
+      toast(`<span class="muted">Lobby:</span> <b style="color:${color}">${name}</b> csatlakozott.`);
+    }
+
+    function startGame(){
+      if(State.players.filter(p=>p.alive).length < 2){ alert('Legalább 2 aktív játékos kell.'); return; }
+      State.round = 1; State.eliminated = State.players.filter(p=>!p.alive).length; State.log.push(`<b>Új játék</b> indult ${State.players.length} játékossal.`);
+      save(); renderGame();
+    }
+
+    function resetGame(hard=false){
+      if(hard){ localStorage.removeItem(STORAGE_KEY); location.reload(); return; }
+      // soft reset: új kör, minden choice törlés
+      State.players.forEach(p=>{p.choice=null; p.locked=false});
+      $('#target-display').textContent='–'; $('#avg-display').textContent='–'; $('#winner-area').innerHTML='';
+      updateRevealNextButtons(); renderPlayers(); save();
+    }
+
+    function renderPlayers(){
+      const wrap = $('#players'); wrap.innerHTML = '';
+      State.players.forEach(p=>{
+        const card = document.createElement('div'); card.className='player-card';
+        card.style.opacity = p.alive?1:.6;
+        card.innerHTML = `
+          <div class="player-header">
+            <div class="avatar" style="background:${p.color}"></div>
+            <div style="flex:1">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <b>${escapeHtml(p.name)}</b>
+                ${p.alive?`<span class="tag">${p.points} pont</span>`:`<span class="tag">kiesett (${p.points})</span>`}
+              </div>
+              <div class="muted" style="font-size:12px">${p.alive? 'Válassz számot 0–100 között' : 'Néző (leave gomb a jobb felső sarokban)'}</div>
+            </div>
+            ${!p.alive?`<button class="btn small ghost" onclick="leave('${p.id}')">Leave</button>`:''}
+          </div>
+          ${p.alive?`
+          <div class="grid" style="grid-template-columns:1fr auto;align-items:center">
+            <input type="number" min="0" max="100" placeholder="—" value="${p.choice??''}" ${p.locked?'disabled':''} oninput="onChoice('${p.id}', this.value)"/>
+            ${p.locked?
+              `<span class="pill"><span class="dot" style="background:${p.color}"></span>Lockolva</span>`:
+              `<button class="btn small" onclick="lockChoice('${p.id}')">Lock</button>`}
+          </div>
+          `:''}
+        `;
+        wrap.appendChild(card);
+      });
+    }
+
+    function onChoice(id, val){
+      const p = State.players.find(x=>x.id===id); if(!p) return;
+      const n = Number(val);
+      if(Number.isNaN(n)) {p.choice=null; save(); return;}
+      p.choice = Math.max(0, Math.min(100, Math.round(n)));
+      save(); updateRevealNextButtons();
+    }
+
+    function lockChoice(id){
+      const p = State.players.find(x=>x.id===id); if(!p || !p.alive) return;
+      if(p.choice===null || p.choice===undefined) return alert('Előbb adj meg egy számot!');
+      p.locked = true; save(); renderPlayers(); updateRevealNextButtons();
+    }
+
+    function updateRevealNextButtons(){
+      const alive = State.players.filter(p=>p.alive);
+      const allLocked = alive.length>0 && alive.every(p=>p.locked);
+      $('#btn-reveal').disabled = !allLocked;
+      $('#btn-next').disabled = true;
+    }
+
+    function computeResult(){
+      const alive = State.players.filter(p=>p.alive);
+      if(!(alive.length>0 && alive.every(p=>p.locked))) return;
+
+      // Dupla-szám szabály kezelése (1 kieső után aktiválódik)
+      const disq = new Set();
+      if(State.eliminated >= 1){
+        const map = new Map();
+        alive.forEach(p=>{
+          const k = String(p.choice);
+          map.set(k, (map.get(k)||0)+1);
+        });
+        alive.forEach(p=>{
+          if(map.get(String(p.choice))>1){
+            disq.add(p.id);
+          }
+        });
+      }
+
+      // Átlag és cél
+      const validForAvg = alive.map(p=>p.choice);
+      const avg = validForAvg.reduce((a,b)=>a+b,0)/validForAvg.length;
+      const target = +(avg*0.8).toFixed(2);
+
+      // Speciális 0–100 szabály (3 kieső után, 2 aktív játékosnál)
+      let specialWinner = null;
+      if(State.eliminated >= 3 && alive.length===2){
+        const s = new Set(alive.map(p=>p.choice));
+        if(s.has(0) && s.has(100)){
+          specialWinner = alive.find(p=>p.choice===100);
+        }
+      }
+
+      let winner = specialWinner;
+      if(!winner){
+        // Legközelebbi a célhoz, a diszkvalifikáltak nem nyerhetnek
+        let best = Infinity; let bestPlayer = null;
+        alive.forEach(p=>{
+          if(disq.has(p.id)) return;
+          const d = Math.abs(p.choice - target);
+          if(d < best){ best=d; bestPlayer=p; }
+          else if(d===best){
+            // döntetlen: kisebb szám nyerjen (determinista tiebreak)
+            if(p.choice < bestPlayer.choice) bestPlayer=p;
+          }
+        });
+        winner = bestPlayer;
+      }
+
+      // Pontozás: alapból minden NEM nyertes élő játékos −1 pont.
+      // Ha valaki duplázott és diszkvalifikált, azonnal −1 pontot kap (és nem kap újabb levonást ugyanabból a körből).
+      // Ha valaki PONT a célt választotta és a 2. szabály aktív, akkor a többiek −2 pontot kapnak.
+
+      const exactHit = winner && (Number(winner.choice) === Number(target));
+      const strongPenalty = (State.eliminated >= 2) && exactHit; // −2 helyett −1
+
+      const changes = [];
+      alive.forEach(p=>{
+        if(p.id===winner?.id) return;
+        if(disq.has(p.id)) {
+          // már kapott −1-et a diszkvalifikáció miatt; itt nem vonunk még egyet
+          return;
+        }
+        p.points -= strongPenalty ? 2 : 1;
+        changes.push(`${escapeHtml(p.name)}: ${strongPenalty? '−2' : '−1'} pont`);
+      });
+
+      // Diszkvalifikáltak −1 pontja
+      if(disq.size>0){
+        State.players.forEach(p=>{ if(disq.has(p.id)){ p.points -= 1; changes.push(`${escapeHtml(p.name)}: −1 pont (dupla-szám)`) } });
+      }
+
+      // Kiesések kezelése
+      const beforeAlive = State.players.filter(p=>p.alive).length;
+      State.players.forEach(p=>{ if(p.points <= -10 && p.alive){ p.alive=false; toast(`<b style="color:${p.color}">${escapeHtml(p.name)}</b> kiesett (−10 pont).`) } });
+      const afterAlive = State.players.filter(p=>p.alive).length;
+      if(afterAlive < beforeAlive){ State.eliminated += (beforeAlive - afterAlive); }
+
+      // Log és megjelenítés
+      $('#avg-display').textContent = avg.toFixed(2);
+      $('#target-display').textContent = target.toFixed(2);
+
+      const winnerArea = $('#winner-area'); winnerArea.innerHTML = '';
+      if(winner){
+        const div = document.createElement('div'); div.className='pill';
+        div.innerHTML = `<span class="dot" style="background:${winner.color}"></span><b>${escapeHtml(winner.name)}</b> nyert (választása: ${winner.choice})` + (strongPenalty? ' — <span class="success-text">PONTOS TALÁLAT!</span>':'' );
+        winnerArea.appendChild(div);
+      } else {
+        const div = document.createElement('div'); div.className='pill'; div.innerHTML = 'Nincs nyertes ebben a körben (mindenki duplázott?)'; winnerArea.appendChild(div);
+      }
+
+      // Eredmény hozzáadása a naplóhoz
+      const dupTxt = disq.size>0? ` • <span class="danger-text">Dupla-szám diszkvalifikációk: ${disq.size}</span>`:'';
+      const penTxt = strongPenalty? ` • <span class="success-text">Pontos találat ➜ többiek −2</span>`:'';
+      State.log.push(`Kör ${State.round}: cél <b>${target.toFixed(2)}</b>, nyertes: <b>${winner?escapeHtml(winner.name):'—'}</b>${dupTxt}${penTxt}`);
+
+      // Következő körre előkészítés
+      State.round += 1;
+      State.players.forEach(p=>{ p.choice=null; p.locked=false; });
+
+      // Győzelem ellenőrzése
+      const stillAlive = State.players.filter(p=>p.alive);
+      if(stillAlive.length===1){
+        const champ = stillAlive[0];
+        State.log.push(`<b style="color:${champ.color}">${escapeHtml(champ.name)}</b> ➜ GAME CLEAR!`);
+        alert(`${champ.name} nyert! GAME CLEAR!`);
+      }
+
+      // Frissítések
+      save();
+      renderPlayers(); refreshCounts(); renderLog();
+      $('#btn-next').disabled = false;
+      $('#btn-reveal').disabled = true;
+    }
+
+    function nextRound(){
+      $('#target-display').textContent='–'; $('#avg-display').textContent='–'; $('#winner-area').innerHTML='';
+      renderPlayers(); refreshCounts(); renderLog(); updateRevealNextButtons(); save();
+    }
+
+    function leave(id){
+      const p = State.players.find(x=>x.id===id); if(!p) return;
+      // Teljes eltávolítás a listából (nézőként is kilép)
+      const i = State.players.findIndex(x=>x.id===id);
+      State.players.splice(i,1);
+      State.eliminated = State.players.filter(x=>!x.alive).length; // újraszámoljuk
+      toast(`<span class="muted">Leave:</span> <b>${escapeHtml(p.name)}</b> elhagyta a szobát.`);
+      save(); renderPlayers(); refreshCounts(); renderLog();
+    }
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    }
+
+    // --- Események ---
+    $('#btn-create').addEventListener('click', ()=>{
+      // új helyi szoba
+      State.roomId = 'local-' + Math.random().toString(36).slice(2,6).toUpperCase();
+      State.players = []; State.round=1; State.eliminated=0; State.log=[];
+      save(); renderLobby(); toast(`<b>Új szoba</b> létrehozva: ${State.roomId}`);
+    });
+
+    $('#btn-join').addEventListener('click', ()=>{
+      if(!State.roomId) State.roomId = 'local';
+      toast(`Beléptél a szobába: <b>${State.roomId}</b>. Adj hozzá játékosokat!`);
+      renderLobby();
+    });
+
+    $('#btn-add-player').addEventListener('click', ()=>{
+      addPlayer($('#inp-name').value, $('#inp-color').value);
+    });
+
+    $('#btn-start').addEventListener('click', ()=> startGame());
+    $('#btn-back-lobby').addEventListener('click', ()=> renderLobby());
+    $('#btn-reset').addEventListener('click', ()=>{
+      if(confirm('Biztosan törlöd a játékot és minden állást?')){ localStorage.removeItem(STORAGE_KEY); location.reload(); }
+    });
+
+    $('#btn-reveal').addEventListener('click', ()=> computeResult());
+    $('#btn-next').addEventListener('click', ()=> nextRound());
+
+    // --- Betöltés ---
+    load();
+    renderLobby();
+    renderLog();
+  </script>
+</body>
+</html>
